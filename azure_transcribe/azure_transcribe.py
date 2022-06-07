@@ -1,4 +1,5 @@
 import time
+import json
 import requests
 from urllib.parse import urljoin
 from uuid import uuid4
@@ -7,28 +8,42 @@ from datetime import datetime, timedelta
 from azure.storage.blob import generate_blob_sas, BlobSasPermissions, BlobServiceClient
 from django.utils import timezone
 
+
 class BlobService:
-    def __init__(self, account_name, account_key, container, conn_str):
+    def __init__(self, account_name: str, account_key: str, container: str, conn_str: str):
         self.account_name = account_name
         self.account_key = account_key
         self.container_name = container
         self.connect_str = conn_str
         self.blob_service_client = BlobServiceClient.from_connection_string(self.connect_str)
 
-    def post_blob(self, file_name):
-        file = file_name
-        blob_client = self.blob_service_client.get_blob_client(container=self.container_name, blob=file)
-        with open(file, "rb") as data:
-            blob_client.upload_blob(data, overwrite=True)
+    def post_blob(self, file_path: str) -> str:
+        blob_client = self.blob_service_client.get_blob_client(
+            container=self.container_name,
+            blob=file_path
+        )
+        with open(file_path, "rb") as data:
+            blob_client.upload_blob(
+                data,
+                overwrite=True
+            )
+        return file_path
 
-    def get_blob_sas(self, file_name):
-        sas_blob = generate_blob_sas(account_name=self.account_name,
-                                     container_name=self.container_name,
-                                     blob_name=file_name,
-                                     account_key=self.account_key,
-                                     permission=BlobSasPermissions(read=True),
-                                     expiry=datetime.utcnow() + timedelta(hours=3))
-        url = 'https://' + self.account_name + '.blob.core.windows.net/' + self.container_name + '/' + file_name + '?' + sas_blob
+    def get_blob_sas(self, name: str) -> str:
+        sas_blob = generate_blob_sas(
+            account_name=self.account_name,
+            container_name=self.container_name,
+            blob_name=name,
+            account_key=self.account_key,
+            permission=BlobSasPermissions(read=True),
+            expiry=datetime.utcnow() + timedelta(hours=3)
+        )
+        url = 'https://{}.blob.core.windows.net/{}/{}?{}'.format(
+            self.account_name,
+            self.container_name,
+            name,
+            sas_blob
+        )
         return url
 
 
@@ -48,14 +63,13 @@ class AzureTranscribe:
                 sas_url
             ],
             "locale": language,
-            "displayName": f"{uuid4()}"
+            "displayName": str(uuid4())
         }
-        import json
         response = requests.post(url, headers=self.headers, data=json.dumps(payload))
         response.raise_for_status()
         return response.json()['self']
 
-    def check_status(self, transcription_url: str, time_sleep: float = 15, time_out: float = 600):
+    def check_status(self, transcription_url: str, time_sleep: float = 15, time_out: float = 600) -> str:
         start = timezone.now()
         while True:
             response = requests.get(transcription_url, headers=self.headers)
@@ -65,7 +79,7 @@ class AzureTranscribe:
             if timezone.now() > start + timedelta(seconds=time_out):
                 raise TimeoutError
 
-    def get_result(self, files_url: str):
+    def get_result(self, files_url: str) -> str:
         response = requests.get(files_url, headers=self.headers)
         file_url = response.json()['values'][1]['links']['contentUrl']
         response = requests.get(file_url)
