@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 import requests
 from azure.storage.blob import generate_blob_sas, BlobSasPermissions, BlobServiceClient
-
+from django.utils import timezone
 
 class BlobService:
     def __init__(self, account_name, account_key, container, conn_str):
@@ -56,16 +56,17 @@ class AzureTranscribe:
         response.raise_for_status()
         return response.json()['self']
 
-    def check_status(self, transcription_url):
-        for i in range(40):
+    def check_status(self, transcription_url: str, time_sleep: float = 15, time_out: float = 600):
+        start = timezone.now()
+        while True:
             response = requests.get(transcription_url, headers=self.headers)
             if response.json()['status'] == 'Succeeded':
                 return response.json()['links']['files']
-            time.sleep(15)
-            if i == 39:
+            time.sleep(time_sleep)
+            if timezone.now() > start + timedelta(seconds=time_out):
                 raise TimeoutError
 
-    def get_result(self, files_url):
+    def get_result(self, files_url: str):
         response = requests.get(files_url, headers=self.headers)
         file_url = response.json()['values'][1]['links']['contentUrl']
         response = requests.get(file_url)
