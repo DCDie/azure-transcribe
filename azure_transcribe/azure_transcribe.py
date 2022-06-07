@@ -1,10 +1,9 @@
 import time
+import requests
 from urllib.parse import urljoin
 from uuid import uuid4
-
 from datetime import datetime, timedelta
 
-import requests
 from azure.storage.blob import generate_blob_sas, BlobSasPermissions, BlobServiceClient
 
 
