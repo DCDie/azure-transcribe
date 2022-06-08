@@ -4,6 +4,10 @@ from azure.storage.blob import generate_blob_sas, BlobSasPermissions, BlobServic
 
 
 class BlobService:
+    """
+    Class for send file to Azure Blob Storage and get the SAS url.
+    """
+
     def __init__(self, account_name: str, account_key: str, container: str, conn_str: str):
         self.account_name = account_name
         self.account_key = account_key

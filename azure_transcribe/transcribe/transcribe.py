@@ -7,8 +7,14 @@ from datetime import timedelta
 
 from django.utils import timezone
 
+from azure_transcribe.fixtures.azure_transcribe_states import AzureTranscribeStates
+
 
 class AzureTranscribe:
+    """
+    Class for creating a transcription job in Azure Transcribe and getting the result.
+    """
+
     def __init__(self, base_url: str, token: str):
         self.base_url = base_url
         self.token = token
@@ -38,7 +44,7 @@ class AzureTranscribe:
             files_url = response.json()['links']['files']
             error = response.json()['properties'].get('error')
 
-            if status in ['Succeeded', 'Failed']:
+            if status in [AzureTranscribeStates.SUCCEEDED, AzureTranscribeStates.FAILED]:
                 return {
                     'status': status,
                     'files_url': files_url,

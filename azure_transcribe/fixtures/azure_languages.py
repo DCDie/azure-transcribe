@@ -1,3 +1,4 @@
+# List of Azure Speech to Text supported languages
 AZURE_TRANSCRIBE_LANGUAGES = {
     "Afrikaans (South Africa)": "af-ZA",
     "Amharic (Ethiopia)": "am-ET",
@@ -123,6 +124,7 @@ AZURE_TRANSCRIBE_LANGUAGES = {
     "Zulu (South Africa)": "zu-ZA",
 }
 
+# List of Azure Speech to Text languages codes
 AZURE_TRANSCRIBE_LANGUAGES_CODES = [
     "af-ZA",
     "am-ET",
