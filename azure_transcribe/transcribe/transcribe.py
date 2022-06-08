@@ -36,21 +36,13 @@ class AzureTranscribe:
             response = requests.get(transcription_url, headers=self.headers)
             status = response.json()['status']
             files_url = response.json()['links']['files']
-            error_code = None
-            error_message = None
             error = response.json()['properties'].get('error')
-            if error:
-                error_code = error.get('code')
-                error_message = error.get('message')
 
             if status in ['Succeeded', 'Failed']:
                 return {
                     'status': status,
                     'files_url': files_url,
-                    'error': {
-                        'code': error_code,
-                        'message': error_message
-                    }
+                    'error': error
                 }
             time.sleep(time_sleep)
             if timezone.now() > start + timedelta(seconds=time_out):
