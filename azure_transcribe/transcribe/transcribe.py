@@ -30,12 +30,28 @@ class AzureTranscribe:
         response.raise_for_status()
         return response.json()['self']
 
-    def check_status(self, transcription_url: str, time_sleep: float = 15, time_out: float = 600) -> str:
+    def check_status(self, transcription_url: str, time_sleep: float = 15, time_out: float = 600) -> dict:
         start = timezone.now()
         while True:
             response = requests.get(transcription_url, headers=self.headers)
-            if response.json()['status'] == 'Succeeded':
-                return response.json()['links']['files']
+            status = response.json()['status']
+            files_url = response.json()['links']['files']
+            error_code = None
+            error_message = None
+            error = response.json()['properties'].get('error')
+            if error:
+                error_code = error.get('code')
+                error_message = error.get('message')
+
+            if status in ['Succeeded', 'Failed']:
+                return {
+                    'status': status,
+                    'files_url': files_url,
+                    'error': {
+                        'code': error_code,
+                        'message': error_message
+                    }
+                }
             time.sleep(time_sleep)
             if timezone.now() > start + timedelta(seconds=time_out):
                 raise TimeoutError
