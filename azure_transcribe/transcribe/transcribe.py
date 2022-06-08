@@ -17,7 +17,7 @@ class AzureTranscribe:
             "Ocp-Apim-Subscription-Key": self.token
         }
 
-    def create_transcription(self, sas_url: str, language: str = 'en-US') -> dict:
+    def create_transcription(self, sas_url: str, language: str = 'en-US') -> str:
         url = urljoin(self.base_url, 'transcriptions')
         payload = {
             "contentUrls": [
