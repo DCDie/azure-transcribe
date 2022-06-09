@@ -44,7 +44,7 @@ class BlobService:
         )
         return url
 
-    def delete_blog(self, blob_name: str):
+    def delete_blob(self, blob_name: str):
         container_client = ContainerClient.from_connection_string(conn_str=self.connect_str,
                                                                   container_name=self.container_name)
         container_client.delete_blob(blob=blob_name)
