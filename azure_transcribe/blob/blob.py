@@ -15,10 +15,10 @@ class BlobService:
         self.connect_str = conn_str
         self.blob_service_client = BlobServiceClient.from_connection_string(self.connect_str)
 
-    def post_blob(self, file_path: str) -> str:
+    def post_blob(self, file_path: str, blob_name: str) -> str:
         blob_client = self.blob_service_client.get_blob_client(
             container=self.container_name,
-            blob=file_path
+            blob=blob_name
         )
         with open(file_path, "rb") as data:
             blob_client.upload_blob(
