@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from azure.storage.blob import generate_blob_sas, BlobSasPermissions, BlobServiceClient
+from azure.storage.blob import generate_blob_sas, BlobSasPermissions, BlobServiceClient, ContainerClient
 
 
 class BlobService:
@@ -43,3 +43,8 @@ class BlobService:
             sas_blob
         )
         return url
+
+    def delete_blog(self, blob_name: str):
+        container_client = ContainerClient.from_connection_string(conn_str=self.connect_str,
+                                                                  container_name=self.container_name)
+        container_client.delete_blob(blob=blob_name)
