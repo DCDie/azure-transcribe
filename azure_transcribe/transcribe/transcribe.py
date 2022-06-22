@@ -1,5 +1,7 @@
 import time
 import json
+from contextlib import suppress
+
 import requests
 from urllib.parse import urljoin
 from uuid import uuid4
@@ -58,4 +60,6 @@ class AzureTranscribe:
         response = requests.get(files_url, headers=self.headers)
         file_url = response.json()['values'][1]['links']['contentUrl']
         response = requests.get(file_url)
-        return response.json()['combinedRecognizedPhrases'][0]['display']
+        with suppress(Exception):
+            return response.json()['combinedRecognizedPhrases'][0]['display']
+        return str()
