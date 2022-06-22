@@ -60,6 +60,7 @@ class AzureTranscribe:
         response = requests.get(files_url, headers=self.headers)
         file_url = response.json()['values'][1]['links']['contentUrl']
         response = requests.get(file_url)
-        with suppress(Exception):
-            return response.json()['combinedRecognizedPhrases'][0]['display']
-        return str()
+        phrases = response.json()['combinedRecognizedPhrases']
+        if len(phrases) == 0:
+            return str()
+        return phrases[0]['display']
