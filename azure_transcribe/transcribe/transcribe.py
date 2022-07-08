@@ -1,13 +1,12 @@
+import datetime
 import time
 import json
-from contextlib import suppress
+from typing import List, Dict, Union
 
 import requests
 from urllib.parse import urljoin
 from uuid import uuid4
-from datetime import timedelta
-
-from django.utils import timezone
+from datetime import timedelta, datetime
 
 from azure_transcribe.fixtures.azure_transcribe_states import AzureTranscribeStates
 
@@ -38,8 +37,8 @@ class AzureTranscribe:
         response.raise_for_status()
         return response.json()['self']
 
-    def check_status(self, transcription_url: str, time_sleep: float = 15, time_out: float = 600) -> dict:
-        start = timezone.now()
+    def check_status(self, transcription_url: str, time_sleep: float = 15, time_out: float = 600) -> Dict[str, str]:
+        start = datetime.now()
         while True:
             response = requests.get(transcription_url, headers=self.headers)
             status = response.json()['status']
@@ -53,14 +52,23 @@ class AzureTranscribe:
                     'error': error
                 }
             time.sleep(time_sleep)
-            if timezone.now() > start + timedelta(seconds=time_out):
+            if datetime.now() > start + timedelta(seconds=time_out):
                 raise TimeoutError
+
+    @classmethod
+    def get_transcription_url(cls, obj: Dict[str, List[Dict[str, Union[str, Dict[str, str]]]]]) -> str:
+        values = obj.get('values')
+        if values:
+            for value in values:
+                if value.get('kind') == 'Transcription':
+                    return value['links']['contentUrl']
 
     def get_result(self, files_url: str) -> str:
         response = requests.get(files_url, headers=self.headers)
-        file_url = response.json()['values'][1]['links']['contentUrl']
-        response = requests.get(file_url)
-        phrases = response.json()['combinedRecognizedPhrases']
-        if bool(phrases):
-            return phrases[0]['display']
+        file_url = self.get_transcription_url(response.json())
+        if file_url:
+            response = requests.get(file_url)
+            phrases = response.json()['combinedRecognizedPhrases']
+            if bool(phrases):
+                return phrases[0]['display']
         return str()
