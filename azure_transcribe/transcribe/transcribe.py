@@ -31,7 +31,12 @@ class AzureTranscribe:
                 sas_url
             ],
             "locale": language,
-            "displayName": str(uuid4())
+            "displayName": str(uuid4()),
+            "properties": {
+                "diarizationEnabled": True,
+                "wordLevelTimestampsEnabled": True,
+                "punctuationMode": "DictatedAndAutomatic"
+            }
         }
         response = requests.post(url, headers=self.headers, data=json.dumps(payload))
         response.raise_for_status()
@@ -63,12 +68,31 @@ class AzureTranscribe:
                 if value.get('kind') == 'Transcription':
                     return value['links']['contentUrl']
 
-    def get_result(self, files_url: str) -> str:
+    @classmethod
+    def prepare_dialog(cls, data: List[Dict[str, List[Dict[str, Union[str, List]]]]]) -> List[Dict[str, str]]:
+        dialog = [{'speaker': data[0].get('speaker'), 'text': ''}]
+        for phase in data:
+            if phase['speaker'] == dialog[-1]['speaker']:
+                dialog[-1]['text'] += ' ' + phase['nBest'][0]['display']
+            else:
+                dialog.append({'speaker': phase['speaker'], 'text': phase['nBest'][0]['display']})
+        return dialog
+
+    def get_result(self, files_url: str) -> Dict[str, Union[str, List[Dict[str, str]]]]:
+        text = str()
+        dialog_text = list()
         response = requests.get(files_url, headers=self.headers)
         file_url = self.get_transcription_url(response.json())
         if file_url:
             response = requests.get(file_url)
-            phrases = response.json()['combinedRecognizedPhrases']
-            if bool(phrases):
-                return phrases[0]['display']
-        return str()
+            response_json = response.json()
+            full_transcript = response_json['combinedRecognizedPhrases']
+            dialog_transcript = response_json['recognizedPhrases']
+            if bool(full_transcript):
+                text = full_transcript[0]['display']
+            if bool(dialog_transcript):
+                dialog_text = self.prepare_dialog(dialog_transcript)
+        return {
+            'full_transcript': text,
+            'dialog_transcript': dialog_text
+        }
