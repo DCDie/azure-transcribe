@@ -145,7 +145,7 @@ class AzureTranscribeBatchMono(AzureTranscribeMono):
         return jsons
 
 
-class AzureTranscribeBatchStereo(AzureTranscribeMono):
+class AzureTranscribeBatchStereo(AzureTranscribeBatchMono):
     """
         Class for creating a stereo-batch-transcription job in Azure Transcribe and getting the result.
     """
