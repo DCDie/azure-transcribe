@@ -150,6 +150,22 @@ class AzureTranscribeBatchStereo(AzureTranscribeBatchMono):
         Class for creating a stereo-batch-transcription job in Azure Transcribe and getting the result.
     """
 
+    def create_transcription(self, sas_urls: List[str], language: str = 'en-US') -> str:
+        url = urljoin(self.base_url, 'transcriptions')
+        payload = {
+            "contentUrls": sas_urls,
+            "locale": language,
+            "displayName": str(uuid4()),
+            "properties": {
+                "diarizationEnabled": False,
+                "wordLevelTimestampsEnabled": True,
+                "punctuationMode": "DictatedAndAutomatic"
+            }
+        }
+        response = requests.post(url, headers=self.headers, data=json.dumps(payload))
+        response.raise_for_status()
+        return response.json().get('self')
+
     @classmethod
     def prepare_dialog(cls, data) -> List[Dict[str, str]]:
         data.sort(key=lambda x: x.get('offset'))
